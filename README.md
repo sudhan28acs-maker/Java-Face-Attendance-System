@@ -1,106 +1,84 @@
-# 🚀 Face Attendance System (Java Spring Boot + React + MySQL)
+# 🚀 AI Face Attendance System (Spring Boot + React + MySQL)
 
-An end-to-end AI Face Recognition Attendance application built using:
-- **Backend**: Java 21, Spring Boot 3, Spring Data JPA, Hibernate, REST APIs.
-- **Frontend**: React 18, HTML5, CSS3, Lucide Icons, WebRTC Camera stream.
-- **Biometric Face Recognition**: Real-time 128-dimensional facial embedding vector extraction & Euclidean distance calculation matching algorithm.
-- **Database**: MySQL (compatible with XAMPP or native MySQL) / H2 in-memory fallback.
+An enterprise-ready biometric face attendance web application featuring **Anti-Spoofing (Liveness / Eye-Blink Verification)**, built with:
+- **Backend**: Java 21, Spring Boot 3.2.5, Spring Data JPA, Hibernate, REST APIs.
+- **Frontend**: React 18, HTML5 Canvas/WebRTC, Modern Dark Mode UI.
+- **Database**: MySQL / MariaDB (via XAMPP & phpMyAdmin) with automatic schema migration.
+- **Biometrics & Security**: Real-time 68-landmark facial tracking, 128-dimensional embedding vectors, Eye Aspect Ratio (EAR) blink detection, and Euclidean distance vector matching.
 
 ---
 
-## 📁 Project Architecture
+## 📁 Repository Structure
 
 ```
 Java Face Attendance System/
 ├── backend/
 │   ├── src/main/java/com/attendance/face/
-│   │   ├── FaceAttendanceApplication.java
-│   │   ├── controller/AttendanceController.java
-│   │   ├── entity/User.java
-│   │   ├── entity/AttendanceRecord.java
-│   │   ├── repository/UserRepository.java
-│   │   ├── repository/AttendanceRepository.java
-│   │   ├── service/AttendanceService.java
-│   │   └── dto/
-│   │       ├── FaceRecognitionRequest.java
-│   │       └── AttendanceResponse.java
+│   │   ├── FaceAttendanceApplication.java       # Spring Boot main runner
+│   │   ├── controller/AttendanceController.java # REST API endpoints (/api/attendance, /api/users)
+│   │   ├── entity/User.java                     # Staff profile & 128D biometric vector
+│   │   ├── entity/AttendanceRecord.java         # Daily attendance records & liveness audit
+│   │   ├── repository/UserRepository.java       # Database repository for staff
+│   │   ├── repository/AttendanceRepository.java # Database repository for attendance
+│   │   ├── service/AttendanceService.java       # Biometric matching & anti-spoof checks
+│   │   └── dto/                                 # Request / Response payloads
 │   ├── src/main/resources/
-│   │   ├── application.properties
+│   │   ├── application.properties               # XAMPP MySQL configuration
 │   │   └── application-mysql.properties
 │   └── pom.xml
-├── frontend/
-│   ├── public/index.html
-│   ├── src/
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   └── index.js
-│   └── package.json
-├── database_schema.sql
-├── run_backend.sh
-└── run_frontend.sh
+├── frontend/                                    # Standard React project files
+├── web-ui/
+│   └── index.html                               # Standalone React UI with Liveness HUD & Eye-Blink Scanner
+├── database_schema.sql                          # MySQL schema for phpMyAdmin
+├── run_backend.sh                               # Quick-start script for backend
+├── run_frontend.sh                              # Quick-start script for frontend
+└── README.md
 ```
 
 ---
 
-## 🛠️ Technology Stack Breakdown
+## 🛡️ Anti-Spoofing & Liveness Capabilities
 
-1. **Java & Spring Boot (Backend)**:
-   - Manages employee profiles and biometric descriptors.
-   - Computes Euclidean distance matrix across face vectors to recognize employees without storing raw proprietary images on disk.
-   - Provides REST endpoints for live check-in, check-out, staff listings, and logs.
-
-2. **MySQL / Database**:
-   - Stores employee records, 128D descriptor JSON, and timestamps.
-   - Included `database_schema.sql` can be imported directly into phpMyAdmin or MySQL CLI.
-
-3. **React 18 & HTML5/CSS3 (Frontend)**:
-   - Modern dark UI with real-time video viewfinder and animated reticle overlay.
-   - Live Scanner Tab: Instant Face ID Check-In and Check-Out.
-   - Registration Tab: Captures facial biometrics directly from webcam, extracts template vector, and associates employee profile.
-   - Logs & Staff Directory: Visual view of daily attendances, confidence scores, and enrolled employees.
+1. **Static Photo Detection**:
+   - Uses **Eye Aspect Ratio (EAR)** calculated at 30 FPS across 68 facial landmarks:
+     $$\text{EAR} = \frac{\|p_2 - p_6\| + \|p_3 - p_5\|}{2 \|p_1 - p_4\|}$$
+   - When a person blinks, EAR dips below `0.22` and returns above `0.27`.
+   - Flat paper photos or static phone pictures maintain a constant EAR value ($\Delta = 0$) and are blocked from checking in.
+2. **Backend Enforcement**:
+   - Attendance requests strictly validate `livenessVerified == true` and log the recorded blink counts to prevent API tampering.
 
 ---
 
-## 🚀 How to Run the Application
+## 🗄️ Database Setup (XAMPP MySQL / phpMyAdmin)
 
-### 1. Database (Optional - Pre-configured fallback active)
-If using XAMPP or local MySQL:
-- Start MySQL in XAMPP (`sudo /opt/lampp/lampp startmysql`).
-- Execute SQL queries in `database_schema.sql` via phpMyAdmin or MySQL console.
-- Run Spring Boot with MySQL profile:
-  ```bash
-  mvn spring-boot:run -Dspring-boot.run.profiles=mysql
-  ```
-*(Note: By default, Spring Boot runs with in-memory H2 database out of the box so you can test immediately even without MySQL started)*
+1. Make sure your XAMPP MySQL server is running.
+2. Open phpMyAdmin at **`http://localhost/phpmyadmin`**.
+3. The database is configured as **`attendance_db`**:
+   - `users`: Stores registered staff and 128-dimensional biometric embeddings.
+   - `attendance_records`: Stores date, time, check-in, check-out, confidence scores, and verified liveness data.
 
-### 2. Run Backend
-In the project root, open a terminal:
+---
+
+## 🚀 How to Execute the Project
+
+### 1. Start the Java Backend
 ```bash
+cd ~/Desktop/"Java Face Attendance System"
 ./run_backend.sh
 ```
-Or:
-```bash
-cd backend
-mvn spring-boot:run
-```
-Backend will start on: **`http://localhost:8080`**
+*Backend runs on `http://localhost:8080` and connects directly to your XAMPP database.*
 
-### 3. Run Frontend
-In another terminal:
+### 2. Start the Frontend Web UI
+In a second terminal:
 ```bash
-./run_frontend.sh
+cd ~/Desktop/"Java Face Attendance System"
+python3 -m http.server 3000 --directory web-ui
 ```
-Or:
-```bash
-cd frontend
-npm start
-```
-Frontend will automatically open at: **`http://localhost:3000`**
+*Frontend interface is available at: `http://localhost:3000`.*
 
 ---
 
-## 🎯 Features
-- 🔍 **Real-time Face Detection & Recognition**: Multi-stage landmark mapping and 128D neural vector extraction.
-- 🕒 **Automatic Check-In / Check-Out**: Detects on-time vs late punch-in (cutoff 9:30 AM).
-- 🛡️ **Anti-duplicate Prevention**: Guards against multiple check-ins on the same day.
-- 👥 **Staff Management**: Instant biometric onboarding and profile directory.
+## 📌 Future Enhancements Roadmap (Replay Video Attack Prevention)
+- [ ] **Dynamic Random Challenge-Response**: Randomized real-time challenge sequences (e.g. *Turn head left/right*, *Smile*, *Nod*) within 3-second windows to defeat recorded phone playback videos.
+- [ ] **Screen Reflection Photometry**: Ambient color pulse reflection to detect phone screen glass versus human skin.
+- [ ] **Moiré / High-Frequency Spectral Filter**: Frequency-domain analysis to spot digital display pixel grids.
