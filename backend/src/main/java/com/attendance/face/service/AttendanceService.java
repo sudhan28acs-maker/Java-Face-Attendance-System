@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +20,6 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
 
     // Euclidean distance threshold for matching 128-dimensional face descriptors
-    // Usually <= 0.50 or 0.60 indicates the same person in face-api.js / dlib models
     private static final double MATCH_THRESHOLD = 0.55;
 
     public AttendanceService(UserRepository userRepository, AttendanceRepository attendanceRepository) {
@@ -52,6 +50,11 @@ public class AttendanceService {
     }
 
     public AttendanceResponse processFaceAttendance(FaceRecognitionRequest request) {
+        // --- 1. LIVENESS & ANTI-SPOOFING ENFORCEMENT ---
+        if (request.getLivenessVerified() == null || !request.getLivenessVerified()) {
+            return new AttendanceResponse(false, "Anti-Spoof Alert: Live human eye blink not detected! Showing a photo or screen is prohibited.");
+        }
+
         if (request.getFaceDescriptor() == null || request.getFaceDescriptor().trim().isEmpty()) {
             return new AttendanceResponse(false, "Face descriptor data not provided.");
         }
@@ -65,7 +68,7 @@ public class AttendanceService {
 
         List<User> users = userRepository.findAll();
         if (users.isEmpty()) {
-            return new AttendanceResponse(false, "No registered employees found. Please register employee faces first.");
+            return new AttendanceResponse(false, "No registered employees found. Please register staff faces first.");
         }
 
         User bestMatch = null;
@@ -96,15 +99,17 @@ public class AttendanceService {
 
         AttendanceRecord record;
         String action = request.getActionType() != null ? request.getActionType().toUpperCase() : "CHECK_IN";
+        int blinks = request.getBlinkCount() != null ? request.getBlinkCount() : 1;
 
         if ("CHECK_OUT".equals(action)) {
             if (existingOpt.isPresent()) {
                 record = existingOpt.get();
                 record.setCheckOutTime(now);
+                record.setLivenessVerified(true);
                 attendanceRepository.save(record);
                 return new AttendanceResponse(true, "Check-Out recorded successfully for " + bestMatch.getFullName(), bestMatch, record, minDistance);
             } else {
-                record = new AttendanceRecord(bestMatch, today, null, "CHECK_OUT_ONLY", 1.0 - minDistance, request.getCapturedSnapshot());
+                record = new AttendanceRecord(bestMatch, today, null, "CHECK_OUT_ONLY", 1.0 - minDistance, request.getCapturedSnapshot(), true, blinks);
                 record.setCheckOutTime(now);
                 attendanceRepository.save(record);
                 return new AttendanceResponse(true, "Check-Out recorded for " + bestMatch.getFullName(), bestMatch, record, minDistance);
@@ -118,10 +123,10 @@ public class AttendanceService {
 
             // Normal office cutoff at 09:30 AM
             String status = now.isAfter(LocalTime.of(9, 30)) ? "LATE" : "PRESENT";
-            record = new AttendanceRecord(bestMatch, today, now, status, 1.0 - minDistance, request.getCapturedSnapshot());
+            record = new AttendanceRecord(bestMatch, today, now, status, 1.0 - minDistance, request.getCapturedSnapshot(), true, blinks);
             attendanceRepository.save(record);
 
-            return new AttendanceResponse(true, "Attendance marked successfully! Status: " + status + " (" + bestMatch.getFullName() + ")", bestMatch, record, minDistance);
+            return new AttendanceResponse(true, "Live attendance marked successfully! Status: " + status + " (" + bestMatch.getFullName() + ")", bestMatch, record, minDistance);
         }
     }
 
