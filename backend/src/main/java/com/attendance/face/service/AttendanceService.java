@@ -104,18 +104,18 @@ public class AttendanceService {
                 record.setCheckOutTime(now);
                 record.setLivenessVerified(live);
                 attendanceRepository.save(record);
-                return new AttendanceResponse(true, "Check-Out recorded successfully for " + bestMatch.getFullName(), bestMatch, record, minDistance);
+                return new AttendanceResponse(true, "Check-Out recorded successfully for " + bestMatch.getFullName() + " at " + now.toString().substring(0, 8), bestMatch, record, minDistance);
             } else {
                 record = new AttendanceRecord(bestMatch, today, null, "CHECK_OUT_ONLY", 1.0 - minDistance, request.getCapturedSnapshot(), live, blinks);
                 record.setCheckOutTime(now);
                 attendanceRepository.save(record);
-                return new AttendanceResponse(true, "Check-Out recorded for " + bestMatch.getFullName(), bestMatch, record, minDistance);
+                return new AttendanceResponse(true, "Check-Out recorded for " + bestMatch.getFullName() + " at " + now.toString().substring(0, 8), bestMatch, record, minDistance);
             }
         } else {
             // Default CHECK_IN
             if (existingOpt.isPresent()) {
                 record = existingOpt.get();
-                return new AttendanceResponse(true, "Already checked in today at " + record.getCheckInTime() + " for " + bestMatch.getFullName(), bestMatch, record, minDistance);
+                return new AttendanceResponse(true, "Check-In verified! " + bestMatch.getFullName() + " is recorded as " + record.getStatus() + " (at " + record.getCheckInTime() + ")", bestMatch, record, minDistance);
             }
 
             // Normal office cutoff at 09:30 AM
