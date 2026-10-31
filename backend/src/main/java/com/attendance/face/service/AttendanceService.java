@@ -20,7 +20,8 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
 
     // Euclidean distance threshold for matching 128-dimensional face descriptors
-    private static final double MATCH_THRESHOLD = 0.55;
+    // 0.65 provides reliable tolerance for webcam lighting & slight angle variations
+    private static final double MATCH_THRESHOLD = 0.65;
 
     public AttendanceService(UserRepository userRepository, AttendanceRepository attendanceRepository) {
         this.userRepository = userRepository;

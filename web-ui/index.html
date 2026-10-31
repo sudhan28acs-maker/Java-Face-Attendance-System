@@ -427,26 +427,19 @@
         if (!vid) return null;
         if (window.faceapi && modelsReady) {
           try {
-            const detection = await window.faceapi
+            // First try high-accuracy SSD MobileNet
+            let detection = await window.faceapi
               .detectSingleFace(vid)
               .withFaceLandmarks()
               .withFaceDescriptor();
-            if (detection) {
+            if (detection && detection.descriptor) {
               return Array.from(detection.descriptor);
             }
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Standard face descriptor extract retry:", e);
+          }
         }
-        // Fallback frame descriptor
-        const canvas = document.createElement('canvas');
-        canvas.width = 160; canvas.height = 160;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(vid, 0, 0, 160, 160);
-        const imgData = ctx.getImageData(0, 0, 160, 160).data;
-        const vector = [];
-        for (let i = 0; i < 128; i++) {
-          vector.push(((imgData[i * 4] || 128) - 128) / 128);
-        }
-        return vector;
+        return null;
       };
 
       const captureFrameImage = (vid) => {
