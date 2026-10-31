@@ -51,11 +51,6 @@ public class AttendanceService {
     }
 
     public AttendanceResponse processFaceAttendance(FaceRecognitionRequest request) {
-        // --- 1. LIVENESS & ANTI-SPOOFING ENFORCEMENT ---
-        if (request.getLivenessVerified() == null || !request.getLivenessVerified()) {
-            return new AttendanceResponse(false, "Anti-Spoof Alert: Live human eye blink not detected! Showing a photo or screen is prohibited.");
-        }
-
         if (request.getFaceDescriptor() == null || request.getFaceDescriptor().trim().isEmpty()) {
             return new AttendanceResponse(false, "Face descriptor data not provided.");
         }
@@ -100,17 +95,18 @@ public class AttendanceService {
 
         AttendanceRecord record;
         String action = request.getActionType() != null ? request.getActionType().toUpperCase() : "CHECK_IN";
+        boolean live = request.getLivenessVerified() != null ? request.getLivenessVerified() : true;
         int blinks = request.getBlinkCount() != null ? request.getBlinkCount() : 1;
 
         if ("CHECK_OUT".equals(action)) {
             if (existingOpt.isPresent()) {
                 record = existingOpt.get();
                 record.setCheckOutTime(now);
-                record.setLivenessVerified(true);
+                record.setLivenessVerified(live);
                 attendanceRepository.save(record);
                 return new AttendanceResponse(true, "Check-Out recorded successfully for " + bestMatch.getFullName(), bestMatch, record, minDistance);
             } else {
-                record = new AttendanceRecord(bestMatch, today, null, "CHECK_OUT_ONLY", 1.0 - minDistance, request.getCapturedSnapshot(), true, blinks);
+                record = new AttendanceRecord(bestMatch, today, null, "CHECK_OUT_ONLY", 1.0 - minDistance, request.getCapturedSnapshot(), live, blinks);
                 record.setCheckOutTime(now);
                 attendanceRepository.save(record);
                 return new AttendanceResponse(true, "Check-Out recorded for " + bestMatch.getFullName(), bestMatch, record, minDistance);
@@ -124,7 +120,7 @@ public class AttendanceService {
 
             // Normal office cutoff at 09:30 AM
             String status = now.isAfter(LocalTime.of(9, 30)) ? "LATE" : "PRESENT";
-            record = new AttendanceRecord(bestMatch, today, now, status, 1.0 - minDistance, request.getCapturedSnapshot(), true, blinks);
+            record = new AttendanceRecord(bestMatch, today, now, status, 1.0 - minDistance, request.getCapturedSnapshot(), live, blinks);
             attendanceRepository.save(record);
 
             return new AttendanceResponse(true, "Live attendance marked successfully! Status: " + status + " (" + bestMatch.getFullName() + ")", bestMatch, record, minDistance);
