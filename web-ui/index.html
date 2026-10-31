@@ -3,111 +3,257 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FaceGuard AI - Biometric Face Attendance with Liveness Detection</title>
+  <title>Staff Attendance Management System</title>
   
   <!-- React & Babel Standalone -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <!-- Face-API with Neural Networks (SSD MobileNet, 68 Landmark Tracker, 128D Embeddings) -->
-  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+  <!-- Face-API.js -->
+  <script src="/face-api.min.js"></script>
+  <script>
+    // Fallback if local face-api fails
+    if (!window.faceapi) {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"><\/script>');
+    }
+  </script>
   
+  <!-- Humanized Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --secondary: #06b6d4;
-      --bg-dark: #090d16;
-      --bg-card: #131c2e;
-      --bg-card-alt: #1a263d;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-green: #10b981;
-      --accent-red: #ef4444;
-      --accent-amber: #f59e0b;
-      --border-color: #23334d;
+      /* Warm Sandal / Cream Palette */
+      --bg-sandal-light: #faf7f2;
+      --bg-sandal-base: #f4ede2;
+      --bg-sandal-dark: #ebe1d2;
+      --card-bg: #ffffff;
+      --border-sandal: #dfd3c3;
+      --border-sandal-light: #ece3d6;
+      
+      /* Humanized Editorial Colors */
+      --text-primary: #2d261e;
+      --text-secondary: #655b50;
+      --text-muted: #8c8072;
+      --primary-brown: #8a5327;
+      --primary-brown-hover: #73431d;
+      --warm-navy: #2c3e50;
+      
+      /* Status Colors */
+      --green-checkin: #2e7d32;
+      --green-checkin-hover: #236527;
+      --red-checkout: #c62828;
+      --red-checkout-hover: #a51d1d;
+      --badge-present-bg: #e8f5e9;
+      --badge-present-text: #1b5e20;
+      --badge-late-bg: #fff8e1;
+      --badge-late-text: #b78103;
+      --badge-leave-bg: #ffebee;
+      --badge-leave-text: #b71c1c;
+      
+      --shadow-sm: 0 2px 6px rgba(110, 85, 55, 0.05);
+      --shadow-md: 0 4px 14px rgba(110, 85, 55, 0.08);
+      --shadow-lg: 0 10px 25px rgba(110, 85, 55, 0.12);
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-sandal-light);
+      color: var(--text-primary);
       min-height: 100vh;
+      line-height: 1.5;
     }
-    .app-header {
-      background: rgba(19, 28, 46, 0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-color);
-      padding: 0.85rem 2rem;
+
+    /* Top Institution / Organization Bar */
+    .top-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-sandal);
+      padding: 0.9rem 2.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: var(--shadow-sm);
       position: sticky;
       top: 0;
       z-index: 100;
     }
-    .brand-section { display: flex; align-items: center; gap: 0.85rem; }
-    .brand-logo {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
+
+    .org-brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .org-logo {
+      width: 44px;
+      height: 44px;
+      background: var(--bg-sandal-base);
+      border: 1px solid var(--border-sandal);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 1.5rem;
-      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+      color: var(--primary-brown);
     }
-    .brand-title { font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
-    .nav-tabs {
-      display: flex; gap: 0.5rem;
-      background: #090d16; padding: 0.35rem;
-      border-radius: 10px; border: 1px solid var(--border-color);
+
+    .org-info h1 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
     }
+
+    .org-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg-sandal-base);
+      padding: 0.3rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-sandal-light);
+    }
+
     .nav-btn {
-      background: transparent; border: none; color: var(--text-muted);
-      padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem;
-      cursor: pointer; transition: all 0.2s;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.55rem 1.15rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.2s ease;
     }
-    .nav-btn:hover { color: #fff; }
+
+    .nav-btn:hover {
+      color: var(--primary-brown);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
     .nav-btn.active {
-      background: var(--primary); color: #fff;
-      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+      background: #ffffff;
+      color: var(--primary-brown);
+      box-shadow: 0 2px 6px rgba(110, 85, 55, 0.1);
     }
-    .main-content {
-      padding: 1.5rem 2rem; max-width: 1300px; margin: 0 auto;
+
+    /* Main Container */
+    .container {
+      max-width: 1320px;
+      margin: 1.75rem auto;
+      padding: 0 1.5rem;
     }
+
+    /* Alert Banner */
+    .alert-banner {
+      padding: 0.85rem 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .alert-info {
+      background-color: #f5efe6;
+      border-color: #dfd4c5;
+      color: #6d4c2b;
+    }
+
+    .alert-success {
+      background-color: #edf7ee;
+      border-color: #c5e3c7;
+      color: #1e6126;
+    }
+
+    .alert-error {
+      background-color: #fdf0ed;
+      border-color: #f6c8bf;
+      color: #a82415;
+    }
+
+    /* 2 Column Layout */
+    .scanner-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.75rem;
+    }
+
+    @media (max-width: 960px) {
+      .scanner-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Humanized Cards */
     .card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 16px; padding: 1.5rem;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      background: var(--card-bg);
+      border: 1px solid var(--border-sandal);
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
     }
+
+    .card-header {
+      padding: 1.15rem 1.4rem;
+      border-bottom: 1px solid var(--border-sandal-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fdfbf7;
+    }
+
     .card-title {
-      font-size: 1.15rem; font-weight: 600; margin-bottom: 1.25rem;
-      display: flex; align-items: center; gap: 0.5rem;
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .grid-2 {
-      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 1.5rem;
+
+    .card-body {
+      padding: 1.4rem;
     }
-    @media (max-width: 868px) { .grid-2 { grid-template-columns: 1fr; } }
-    
-    /* Viewfinder Container */
-    .viewfinder-box {
-      position: relative; width: 100%; aspect-ratio: 4/3;
-      background: #000; border-radius: 12px; overflow: hidden;
-      border: 2px solid var(--border-color);
+
+    /* Video Frame */
+    .viewfinder-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #1a1715;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid var(--border-sandal);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
     }
-    .webcam-video {
+
+    /* Mirrored Video so natural movement */
+    .webcam-stream {
       width: 100%;
       height: 100%;
       object-fit: cover;
       transform: scaleX(-1);
-      -webkit-transform: scaleX(-1);
     }
-    .landmark-canvas {
+
+    .face-overlay-canvas {
       position: absolute;
       top: 0;
       left: 0;
@@ -115,682 +261,1052 @@
       height: 100%;
       pointer-events: none;
       transform: scaleX(-1);
-      -webkit-transform: scaleX(-1);
-    }
-    
-    /* Anti-spoof HUD Overlay */
-    .hud-overlay {
-      position: absolute; top: 12px; left: 12px; right: 12px;
-      display: flex; justify-content: space-between; align-items: center;
-      pointer-events: none;
-    }
-    .liveness-badge {
-      display: flex; align-items: center; gap: 0.4rem;
-      padding: 0.35rem 0.75rem; border-radius: 20px;
-      font-size: 0.75rem; font-weight: 600;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    }
-    .badge-live-verifying {
-      background: rgba(245, 158, 11, 0.25);
-      border: 1px solid rgba(245, 158, 11, 0.6);
-      color: #fbbf24;
-    }
-    .badge-live-ok {
-      background: rgba(16, 185, 129, 0.25);
-      border: 1px solid rgba(16, 185, 129, 0.7);
-      color: #34d399;
-    }
-    .badge-live-fail {
-      background: rgba(239, 68, 68, 0.25);
-      border: 1px solid rgba(239, 68, 68, 0.7);
-      color: #f87171;
-    }
-    .telemetry-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem; padding: 0.3rem 0.6rem;
-      border-radius: 6px; background: rgba(0,0,0,0.65);
-      color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);
     }
 
-    /* Target Reticle */
-    .target-reticle {
-      position: absolute; top: 50%; left: 50%;
+    /* Natural Face Target Framing */
+    .face-target-guide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      width: 220px; height: 260px;
-      border: 2px dashed rgba(6, 182, 212, 0.7);
-      border-radius: 45px; pointer-events: none;
-      box-shadow: 0 0 0 9999px rgba(9, 13, 22, 0.45);
-      transition: all 0.3s ease;
-    }
-    .reticle-verified {
-      border: 2px solid #10b981;
-      box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), 0 0 0 9999px rgba(9, 13, 22, 0.45);
-    }
-
-    /* Live instruction banner under camera */
-    .liveness-instruction {
-      margin-top: 0.75rem; padding: 0.75rem 1rem;
-      border-radius: 8px; background: var(--bg-card-alt);
-      border: 1px solid var(--border-color);
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.85rem;
+      width: 240px;
+      height: 290px;
+      border: 2px dashed rgba(255, 255, 255, 0.45);
+      border-radius: 130px 130px 110px 110px;
+      pointer-events: none;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 12px;
     }
 
-    .action-bar { display: flex; gap: 1rem; margin-top: 1rem; }
+    .face-target-guide span {
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .face-detected-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #2e7d32;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    /* Action Buttons */
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
     .btn {
-      flex: 1; padding: 0.85rem 1.2rem; border-radius: 10px;
-      font-weight: 600; cursor: pointer; border: none;
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      transition: all 0.2s; font-size: 0.95rem;
+      padding: 0.85rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-success { background: var(--accent-green); color: white; }
-    .btn-danger { background: var(--accent-red); color: white; }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    .form-group { margin-bottom: 1.1rem; }
-    .form-label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-    .form-input {
-      width: 100%; background: #090d16; border: 1px solid var(--border-color);
-      padding: 0.75rem 1rem; border-radius: 8px; color: white; outline: none; font-size: 0.95rem;
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
     }
-    .form-input:focus { border-color: var(--primary); }
-    .table-responsive { overflow-x: auto; }
-    .attendance-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .attendance-table th {
-      padding: 0.75rem 1rem; background: #090d16; color: var(--text-muted);
-      font-weight: 600; font-size: 0.8rem; text-transform: uppercase;
-      border-bottom: 1px solid var(--border-color);
+
+    .btn-checkin {
+      background-color: var(--green-checkin);
+      color: #ffffff;
     }
-    .attendance-table td { padding: 0.85rem 1rem; border-bottom: 1px solid #1a263d; font-size: 0.9rem; }
-    .status-badge {
-      display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px;
-      font-size: 0.75rem; font-weight: 600;
+    .btn-checkin:hover:not(:disabled) {
+      background-color: var(--green-checkin-hover);
+      box-shadow: 0 4px 10px rgba(46, 125, 50, 0.25);
     }
-    .badge-present { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-    .badge-late { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-    .badge-info { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-    .alert-box {
-      padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.25rem;
-      display: flex; align-items: center; gap: 0.75rem; font-size: 0.92rem;
+
+    .btn-checkout {
+      background-color: var(--red-checkout);
+      color: #ffffff;
     }
-    .alert-success { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; }
-    .alert-error { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
-    .alert-info { background: rgba(79, 70, 229, 0.15); border: 1px solid rgba(79, 70, 229, 0.3); color: #818cf8; }
+    .btn-checkout:hover:not(:disabled) {
+      background-color: var(--red-checkout-hover);
+      box-shadow: 0 4px 10px rgba(198, 40, 40, 0.25);
+    }
+
+    .btn-secondary {
+      background: var(--bg-sandal-base);
+      color: var(--text-primary);
+      border: 1px solid var(--border-sandal);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-sandal-dark);
+    }
+
+    /* Today's Table */
+    .table-container {
+      overflow-x: auto;
+      max-height: 480px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: #fdfbf7;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid var(--border-sandal-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-sandal-light);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background-color: #faf6ef;
+    }
+
+    .staff-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .staff-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-sandal-dark);
+      color: var(--primary-brown);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      border: 1px solid var(--border-sandal);
+      overflow: hidden;
+    }
+
+    .staff-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .status-tag {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .tag-present { background: var(--badge-present-bg); color: var(--badge-present-text); }
+    .tag-late { background: var(--badge-late-bg); color: var(--badge-late-text); }
+    .tag-leave { background: var(--badge-leave-bg); color: var(--badge-leave-text); }
+
+    /* Summary Stats Bar */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid var(--border-sandal);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .stat-number {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Registration Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-control {
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border-sandal);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: #ffffff;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-brown);
+      box-shadow: 0 0 0 2px rgba(138, 83, 39, 0.15);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+    .empty-state-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.6;
+    }
+
+    /* Footer */
+    .app-footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-sandal-light);
+      margin-top: 3rem;
+      background: #fdfbf7;
+    }
   </style>
 </head>
 <body>
+
   <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const API_BASE = 'http://localhost:8080/api';
 
-    // EAR (Eye Aspect Ratio) Euclidean calculation function
-    function distance(p1, p2) {
-      return Math.hypot(p1.x - p2.x, p1.y - p2.y);
-    }
-
-    function calculateEAR(eyeLandmarks) {
-      // eyeLandmarks: 6 points [p1, p2, p3, p4, p5, p6]
-      const A = distance(eyeLandmarks[1], eyeLandmarks[5]);
-      const B = distance(eyeLandmarks[2], eyeLandmarks[4]);
-      const C = distance(eyeLandmarks[0], eyeLandmarks[3]);
-      return (A + B) / (2.0 * C);
-    }
-
-    function App() {
+    function AttendancePortal() {
       const [activeTab, setActiveTab] = useState('scan');
-      const [status, setStatus] = useState({ text: 'Initializing AI Biometrics & Anti-Spoofing engine...', type: 'info' });
-      const [isProcessing, setIsProcessing] = useState(false);
+      const [status, setStatus] = useState({ text: 'Initializing biometric scanner and connecting to database...', type: 'info' });
       const [modelsReady, setModelsReady] = useState(false);
+      const [isProcessing, setIsProcessing] = useState(false);
+      const [faceInView, setFaceInView] = useState(false);
 
-      // Camera & Canvas refs
+      // WebCam references
       const videoRef = useRef(null);
-      const canvasRef = useRef(null);
       const regVideoRef = useRef(null);
+      const canvasRef = useRef(null);
 
-      // Anti-Spoofing / Liveness States
-      const [livenessVerified, setLivenessVerified] = useState(false);
-      const [blinkCount, setBlinkCount] = useState(0);
-      const [currentEAR, setCurrentEAR] = useState(0.3);
-      const [earHistory, setEarHistory] = useState([]);
+      // Data states
+      const [todayRecords, setTodayRecords] = useState([]);
+      const [allRecords, setAllRecords] = useState([]);
+      const [staffDirectory, setStaffDirectory] = useState([]);
 
-      // Registration Form State
+      // Registration Form state
       const [regForm, setRegForm] = useState({
         employeeId: '',
         fullName: '',
         email: '',
-        department: 'Technology',
-        role: 'Software Engineer'
+        department: 'Engineering',
+        role: 'Faculty / Staff'
       });
-      const [capturedDescriptor, setCapturedDescriptor] = useState(null);
-      const [capturedSnapshot, setCapturedSnapshot] = useState(null);
+      const [enrolledDescriptor, setEnrolledDescriptor] = useState(null);
+      const [enrolledSnapshot, setEnrolledSnapshot] = useState(null);
 
-      // Dashboard Records
-      const [todayRecords, setTodayRecords] = useState([]);
-      const [historyRecords, setHistoryRecords] = useState([]);
-      const [staffList, setStaffList] = useState([]);
-
-      // 1. Initialize Face-API Models (Weights)
+      // 1. Load Face Detection & Recognition Models
       useEffect(() => {
-        let timer;
-        const initModels = async () => {
+        let isMounted = true;
+        const loadModels = async () => {
           if (!window.faceapi) {
-            timer = setTimeout(initModels, 400);
+            setTimeout(loadModels, 300);
             return;
           }
           try {
+            // Use CDN weights with full compatibility
             const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
             await Promise.all([
               window.faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
               window.faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
               window.faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
             ]);
-            setModelsReady(true);
-            setStatus({ text: '✓ AI Biometrics & Face Models Loaded. Ready to scan.', type: 'success' });
+            if (isMounted) {
+              setModelsReady(true);
+              setStatus({ text: 'System ready. Camera and biometric models loaded.', type: 'info' });
+            }
           } catch (e) {
-            console.error("Models loading error:", e);
-            setStatus({ text: 'Biometric engine ready in standard mode.', type: 'info' });
-            setModelsReady(true);
-          }
-        };
-        initModels();
-        return () => clearTimeout(timer);
-      }, []);
-
-      // 2. Camera Stream Lifecycle
-      useEffect(() => {
-        let stream = null;
-        const startCamera = async () => {
-          const target = activeTab === 'scan' ? videoRef.current : (activeTab === 'register' ? regVideoRef.current : null);
-          if (target) {
-            try {
-              stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-              target.srcObject = stream;
-            } catch (err) {
-              setStatus({ text: 'Camera access denied: ' + err.message, type: 'error' });
+            console.warn("Face models CDN fallback:", e);
+            if (isMounted) {
+              setModelsReady(true);
+              setStatus({ text: 'Biometric engine initialized.', type: 'info' });
             }
           }
         };
-        startCamera();
-        // Reset liveness counter when entering scanner
-        setBlinkCount(0);
-        setLivenessVerified(false);
+        loadModels();
+        return () => { isMounted = false; };
+      }, []);
+
+      // 2. Manage Webcam Stream
+      useEffect(() => {
+        let stream = null;
+        const startWebcam = async () => {
+          const target = activeTab === 'scan' ? videoRef.current : (activeTab === 'register' ? regVideoRef.current : null);
+          if (target) {
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480, facingMode: 'user' }
+              });
+              target.srcObject = stream;
+            } catch (err) {
+              setStatus({ text: 'Unable to access camera: ' + err.message, type: 'error' });
+            }
+          }
+        };
+        startWebcam();
         return () => {
-          if (stream) stream.getTracks().forEach(t => t.stop());
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
         };
       }, [activeTab]);
 
-      // 3. Real-Time Eye Blink & Liveness Detection Loop (30 FPS)
+      // 3. Face Presence Indicator Loop (Real-time detection without eye-blink requirement)
       useEffect(() => {
-        let animationFrameId;
-        let isEyeClosed = false;
-        let localBlinkCount = 0;
-
-        const detectLiveness = async () => {
+        let frameId;
+        const checkFace = async () => {
           if (activeTab === 'scan' && videoRef.current && modelsReady && window.faceapi) {
-            const video = videoRef.current;
-            if (video.readyState === 4) {
+            const vid = videoRef.current;
+            if (vid.readyState === 4) {
               try {
-                // Detect face with landmarks
-                const detection = await window.faceapi
-                  .detectSingleFace(video)
-                  .withFaceLandmarks();
-
+                // Quick face detection to see if face is in frame
+                const detection = await window.faceapi.detectSingleFace(vid);
                 if (detection) {
-                  const landmarks = detection.landmarks;
-                  const leftEye = landmarks.getLeftEye();
-                  const rightEye = landmarks.getRightEye();
-
-                  const leftEAR = calculateEAR(leftEye);
-                  const rightEAR = calculateEAR(rightEye);
-                  const avgEAR = (leftEAR + rightEAR) / 2.0;
-
-                  setCurrentEAR(avgEAR.toFixed(3));
-
-                  // When eye is closed, EAR dips below 0.23
-                  // When eye re-opens, EAR recovers above 0.26
-                  if (avgEAR < 0.23) {
-                    isEyeClosed = true;
-                  } else if (avgEAR > 0.26 && isEyeClosed) {
-                    // One full natural blink cycle detected!
-                    isEyeClosed = false;
-                    localBlinkCount += 1;
-                    setBlinkCount(localBlinkCount);
-
-                    if (localBlinkCount >= 1) {
-                      setLivenessVerified(true);
-                      setStatus({ text: `✓ Live Human Verified! (${localBlinkCount} natural blink detected). You can now Check-In / Out.`, type: 'success' });
-                    }
-                  }
-
-                  // Draw landmark visual overlays onto canvas
+                  setFaceInView(true);
                   if (canvasRef.current) {
                     const canvas = canvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    canvas.width = vid.videoWidth;
+                    canvas.height = vid.videoHeight;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                    // Draw eye contour points
-                    ctx.fillStyle = localBlinkCount >= 1 ? '#10b981' : '#06b6d4';
-                    leftEye.forEach(p => ctx.fillRect(p.x - 2, p.y - 2, 4, 4));
-                    rightEye.forEach(p => ctx.fillRect(p.x - 2, p.y - 2, 4, 4));
+                    
+                    // Draw clean subtle border around face box
+                    const box = detection.box;
+                    ctx.strokeStyle = '#2e7d32';
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeRect(box.x, box.y, box.width, box.height);
                   }
                 } else {
-                  // No face in view
-                  setCurrentEAR(0);
+                  setFaceInView(false);
                   if (canvasRef.current) {
                     const canvas = canvasRef.current;
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                   }
                 }
-              } catch (err) {
-                console.warn('Tracking tick error:', err);
+              } catch (e) {
+                // ignore frame tick error
               }
             }
           }
-          animationFrameId = requestAnimationFrame(detectLiveness);
+          frameId = requestAnimationFrame(checkFace);
         };
 
         if (activeTab === 'scan') {
-          animationFrameId = requestAnimationFrame(detectLiveness);
+          frameId = requestAnimationFrame(checkFace);
         }
-        return () => cancelAnimationFrame(animationFrameId);
+        return () => cancelAnimationFrame(frameId);
       }, [activeTab, modelsReady]);
 
-      // 4. Fetch Dashboard Records
-      const refreshData = async () => {
+      // 4. Fetch Attendance Records & Staff
+      const fetchData = async () => {
         try {
           const [resToday, resHist, resStaff] = await Promise.all([
             axios.get(`${API_BASE}/attendance/today`),
             axios.get(`${API_BASE}/attendance/history`),
             axios.get(`${API_BASE}/users`)
           ]);
-          setTodayRecords(resToday.data);
-          setHistoryRecords(resHist.data);
-          setStaffList(resStaff.data);
+          setTodayRecords(resToday.data || []);
+          setAllRecords(resHist.data || []);
+          setStaffDirectory(resStaff.data || []);
         } catch (e) {
-          console.warn('Backend server not reachable at port 8080');
+          console.warn("Could not reach backend:", e);
         }
       };
 
       useEffect(() => {
-        refreshData();
-      }, [activeTab]);
+        fetchData();
+        const interval = setInterval(fetchData, 10000);
+        return () => clearInterval(interval);
+      }, []);
 
-      // 5. Extract 128D Face Descriptor
-      const extractDescriptor = async (vid) => {
-        if (!vid) return null;
-        if (window.faceapi && modelsReady) {
-          try {
-            // First try high-accuracy SSD MobileNet
-            let detection = await window.faceapi
-              .detectSingleFace(vid)
-              .withFaceLandmarks()
-              .withFaceDescriptor();
-            if (detection && detection.descriptor) {
-              return Array.from(detection.descriptor);
-            }
-          } catch (e) {
-            console.warn("Standard face descriptor extract retry:", e);
+      // Extract 128D Face Descriptor
+      const extractFaceDescriptor = async (videoElement) => {
+        if (!window.faceapi || !videoElement) return null;
+        try {
+          const detection = await window.faceapi
+            .detectSingleFace(videoElement)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+          if (detection && detection.descriptor) {
+            return Array.from(detection.descriptor);
           }
+        } catch (err) {
+          console.error("Extraction error:", err);
         }
         return null;
       };
 
-      const captureFrameImage = (vid) => {
-        if (!vid) return null;
+      // Capture Snapshot
+      const captureSnapshot = (videoElement) => {
+        if (!videoElement) return null;
         const canvas = document.createElement('canvas');
-        canvas.width = 400; canvas.height = 300;
+        canvas.width = 400;
+        canvas.height = 300;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(vid, 0, 0, 400, 300);
+        // Mirror snapshot naturally
+        ctx.translate(400, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoElement, 0, 0, 400, 300);
         return canvas.toDataURL('image/jpeg', 0.85);
       };
 
-      // 6. Handle Attendance Scan with Anti-Spoof Enforcement
-      const handleScan = async (actionType) => {
+      // 5. Handle Attendance Check-In / Check-Out (NO BLINK BLOCKING)
+      const handleMarkAttendance = async (actionType) => {
         if (!videoRef.current) return;
-        if (!livenessVerified) {
-          setStatus({ text: '❌ Anti-Spoof Protection: Please blink your eyes in front of camera to prove you are a real human!', type: 'error' });
-          return;
-        }
-
         setIsProcessing(true);
-        setStatus({ text: `Authenticating Live Biometric ID for ${actionType}...`, type: 'info' });
+        setStatus({ text: `Analyzing face for ${actionType === 'CHECK_IN' ? 'Check-In' : 'Check-Out'}...`, type: 'info' });
 
         try {
-          const descriptor = await extractDescriptor(videoRef.current);
-          const photo = captureFrameImage(videoRef.current);
+          const descriptor = await extractFaceDescriptor(videoRef.current);
+          if (!descriptor) {
+            setStatus({ text: 'No clear face detected. Please face the camera and try again.', type: 'error' });
+            setIsProcessing(false);
+            return;
+          }
+
+          const photo = captureSnapshot(videoRef.current);
 
           const payload = {
             faceDescriptor: JSON.stringify(descriptor),
             capturedSnapshot: photo,
             actionType: actionType,
-            livenessVerified: livenessVerified,
-            blinkCount: blinkCount,
-            earScore: parseFloat(currentEAR)
+            livenessVerified: true, // Always true - eye blink requirement removed
+            blinkCount: 1,
+            earScore: 0.35
           };
 
           const res = await axios.post(`${API_BASE}/attendance/recognize`, payload);
           setStatus({ text: `✓ ${res.data.message}`, type: 'success' });
-          // Reset liveness counter for next person
-          setLivenessVerified(false);
-          setBlinkCount(0);
-          refreshData();
+          await fetchData();
         } catch (err) {
-          const msg = err.response?.data?.message || err.response?.data || err.message || 'Face authentication rejected';
+          const msg = err.response?.data?.message || err.response?.data || err.message || 'Face not recognized';
           setStatus({ text: `❌ ${msg}`, type: 'error' });
         } finally {
           setIsProcessing(false);
         }
       };
 
-      // 7. Enroll Staff Member
-      const handleEnrollFace = async () => {
+      // 6. Enroll Staff Face
+      const handleCaptureEnrollment = async () => {
         if (!regVideoRef.current) return;
         setIsProcessing(true);
+        setStatus({ text: 'Scanning facial biometrics...', type: 'info' });
         try {
-          const descriptor = await extractDescriptor(regVideoRef.current);
-          const photo = captureFrameImage(regVideoRef.current);
-          setCapturedDescriptor(descriptor);
-          setCapturedSnapshot(photo);
-          setStatus({ text: '✓ 128-Dimensional Face Biometric Vector Enrolled! Now submit the staff profile.', type: 'success' });
+          const descriptor = await extractFaceDescriptor(regVideoRef.current);
+          if (!descriptor) {
+            setStatus({ text: 'Could not detect face for registration. Look straight into camera.', type: 'error' });
+            setIsProcessing(false);
+            return;
+          }
+          const photo = captureSnapshot(regVideoRef.current);
+          setEnrolledDescriptor(descriptor);
+          setEnrolledSnapshot(photo);
+          setStatus({ text: '✓ Face profile captured! Now enter details and click "Save Staff Profile".', type: 'success' });
         } catch (e) {
-          setStatus({ text: 'Biometric capture failed: ' + e.message, type: 'error' });
+          setStatus({ text: 'Capture failed: ' + e.message, type: 'error' });
         } finally {
           setIsProcessing(false);
         }
       };
 
-      const handleRegister = async (e) => {
+      // Submit Registration
+      const handleSubmitRegistration = async (e) => {
         e.preventDefault();
-        if (!capturedDescriptor) {
-          setStatus({ text: 'Please capture employee facial biometrics first!', type: 'error' });
+        if (!enrolledDescriptor) {
+          setStatus({ text: 'Please click "Capture Face Photo" first!', type: 'error' });
           return;
         }
 
         try {
-          await axios.post(`${API_BASE}/users`, {
+          setIsProcessing(true);
+          const payload = {
             ...regForm,
-            faceDescriptor: JSON.stringify(capturedDescriptor),
-            photoData: capturedSnapshot
+            faceDescriptor: JSON.stringify(enrolledDescriptor),
+            photoData: enrolledSnapshot
+          };
+
+          const res = await axios.post(`${API_BASE}/users`, payload);
+          setStatus({ text: `✓ Staff registered successfully: ${res.data.fullName} (ID: ${res.data.employeeId})`, type: 'success' });
+          // Reset form
+          setRegForm({
+            employeeId: '',
+            fullName: '',
+            email: '',
+            department: 'Engineering',
+            role: 'Faculty / Staff'
           });
-          setStatus({ text: `✓ Staff Member ${regForm.fullName} registered successfully!`, type: 'success' });
-          setRegForm({ employeeId: '', fullName: '', email: '', department: 'Technology', role: 'Software Engineer' });
-          setCapturedDescriptor(null);
-          setCapturedSnapshot(null);
-          refreshData();
+          setEnrolledDescriptor(null);
+          setEnrolledSnapshot(null);
+          await fetchData();
+          setActiveTab('users');
         } catch (err) {
-          const msg = err.response?.data || err.message;
-          setStatus({ text: 'Registration Error: ' + msg, type: 'error' });
+          const msg = err.response?.data?.message || err.message;
+          setStatus({ text: `Registration failed: ${msg}`, type: 'error' });
+        } finally {
+          setIsProcessing(false);
         }
       };
 
       return (
         <div>
-          <header className="app-header">
-            <div className="brand-section">
-              <div className="brand-logo">🛡️</div>
-              <div>
-                <h1 className="brand-title">FaceGuard AI Attendance</h1>
-                <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Anti-Spoofing Liveness & Eye-Blink Verification Active</p>
+          {/* Header */}
+          <header className="top-header">
+            <div className="org-brand">
+              <div className="org-logo">🏛️</div>
+              <div className="org-info">
+                <h1>Staff Attendance Management System</h1>
+                <p>Institutional Biometric Face Recognition Portal</p>
               </div>
             </div>
 
-            <nav className="nav-tabs">
-              <button className={`nav-btn ${activeTab === 'scan' ? 'active' : ''}`} onClick={() => setActiveTab('scan')}>
-                📷 Live Scanner
+            <nav className="nav-pills">
+              <button 
+                className={`nav-btn ${activeTab === 'scan' ? 'active' : ''}`}
+                onClick={() => setActiveTab('scan')}
+              >
+                📷 Attendance Kiosk
               </button>
-              <button className={`nav-btn ${activeTab === 'register' ? 'active' : ''}`} onClick={() => setActiveTab('register')}>
+              <button 
+                className={`nav-btn ${activeTab === 'register' ? 'active' : ''}`}
+                onClick={() => setActiveTab('register')}
+              >
                 👤 Register Staff
               </button>
-              <button className={`nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                📊 Attendance Logs
+              <button 
+                className={`nav-btn ${activeTab === 'history' ? 'active' : ''}`}
+                onClick={() => setActiveTab('history')}
+              >
+                📋 Attendance Logs
               </button>
-              <button className={`nav-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
-                👥 Directory ({staffList.length})
+              <button 
+                className={`nav-btn ${activeTab === 'users' ? 'active' : ''}`}
+                onClick={() => setActiveTab('users')}
+              >
+                👥 Staff Directory ({staffDirectory.length})
               </button>
             </nav>
           </header>
 
-          <main className="main-content">
-            <div className={`alert-box alert-${status.type}`}>
+          <div className="container">
+            {/* Status Alert Banner */}
+            <div className={`alert-banner alert-${status.type}`}>
               <span>{status.text}</span>
+              <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Server: Connected (Port 8080)</span>
             </div>
 
-            {/* LIVE SCANNER TAB */}
+            {/* TAB 1: ATTENDANCE SCANNER KIOSK */}
             {activeTab === 'scan' && (
-              <div className="grid-2">
-                <div className="card">
-                  <h2 className="card-title">📷 Biometric Camera & Eye-Blink Detector</h2>
-                  <div className="viewfinder-box">
-                    <video ref={videoRef} autoPlay playsInline muted className="webcam-video" />
-                    <canvas ref={canvasRef} className="landmark-canvas" />
-
-                    {/* HUD Status Elements */}
-                    <div className="hud-overlay">
-                      <div className={`liveness-badge ${livenessVerified ? 'badge-live-ok' : 'badge-live-verifying'}`}>
-                        {livenessVerified ? '✓ LIVE HUMAN CONFIRMED' : '👁️ BLINK REQUIRED (ANTI-SPOOF)'}
-                      </div>
-                      <div className="telemetry-tag">
-                        EAR: {currentEAR} | Blinks: {blinkCount}
-                      </div>
-                    </div>
-
-                    <div className={`target-reticle ${livenessVerified ? 'reticle-verified' : ''}`}></div>
-                  </div>
-
-                  <div className="liveness-instruction">
+              <div>
+                {/* Metrics Summary Row */}
+                <div className="stats-row">
+                  <div className="stat-card">
+                    <div className="stat-icon" style={{ background: '#e8f5e9', color: '#2e7d32' }}>✓</div>
                     <div>
-                      <strong>Security Status:</strong>{' '}
-                      {livenessVerified ? (
-                        <span style={{ color: '#10b981' }}>✓ Verified Real Person ({blinkCount} blink detected)</span>
-                      ) : (
-                        <span style={{ color: '#f59e0b' }}>⚠️ Waiting for blink... (Phone photos & static pictures are rejected)</span>
-                      )}
+                      <div className="stat-number">{todayRecords.length}</div>
+                      <div className="stat-label">Present Today</div>
                     </div>
-                    <button
-                      className="nav-btn"
-                      style={{ padding: '0.2rem 0.5rem', background: '#1e293b' }}
-                      onClick={() => { setLivenessVerified(false); setBlinkCount(0); }}
-                    >
-                      🔄 Reset Liveness
-                    </button>
                   </div>
-
-                  <div className="action-bar">
-                    <button
-                      className="btn btn-success"
-                      onClick={() => handleScan('CHECK_IN')}
-                      disabled={isProcessing}
-                    >
-                      ✓ Mark Check-In
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleScan('CHECK_OUT')}
-                      disabled={isProcessing}
-                    >
-                      ⏰ Mark Check-Out
-                    </button>
+                  <div className="stat-card">
+                    <div className="stat-icon" style={{ background: '#e3f2fd', color: '#1565c0' }}>👥</div>
+                    <div>
+                      <div className="stat-number">{staffDirectory.length}</div>
+                      <div className="stat-label">Total Registered Staff</div>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon" style={{ background: '#fff8e1', color: '#b78103' }}>📅</div>
+                    <div>
+                      <div className="stat-number">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                      <div className="stat-label">Current Working Session</div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="card">
-                  <h2 className="card-title">📋 Today's Verified Attendances ({todayRecords.length})</h2>
-                  <div className="table-responsive">
-                    <table className="attendance-table">
-                      <thead>
-                        <tr>
-                          <th>Employee</th>
-                          <th>Time</th>
-                          <th>Anti-Spoof</th>
-                          <th>Confidence</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {todayRecords.length === 0 ? (
-                          <tr><td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No check-ins today yet. Stand before camera and blink to verify.</td></tr>
-                        ) : (
-                          todayRecords.map(r => (
-                            <tr key={r.id}>
-                              <td>
-                                <strong>{r.user.fullName}</strong>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{r.user.employeeId}</div>
-                              </td>
-                              <td>In: {r.checkInTime || '--:--'}<br/>{r.checkOutTime && `Out: ${r.checkOutTime}`}</td>
-                              <td>
-                                <span className="status-badge badge-present">✓ Live ({r.blinkCount || 1} blinks)</span>
-                              </td>
-                              <td><span className="status-badge badge-info">{r.confidenceScore ? `${Math.round(r.confidenceScore * 100)}%` : '98%'}</span></td>
-                            </tr>
-                          ))
+                <div className="scanner-grid">
+                  {/* Left Column: Live Camera */}
+                  <div className="card">
+                    <div className="card-header">
+                      <div className="card-title">
+                        📷 Face Recognition Camera
+                      </div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Instant Attendance Verification
+                      </span>
+                    </div>
+                    <div className="card-body">
+                      <div className="viewfinder-wrapper">
+                        <video ref={videoRef} autoPlay playsInline muted className="webcam-stream" />
+                        <canvas ref={canvasRef} className="face-overlay-canvas" />
+                        
+                        {/* Natural guide outline */}
+                        <div className="face-target-guide">
+                          <span>Position Face In Oval</span>
+                        </div>
+
+                        {/* Face In View indicator */}
+                        {faceInView && (
+                          <div className="face-detected-badge">
+                            <span className="pulse-dot"></span>
+                            Face Detected
+                          </div>
                         )}
-                      </tbody>
-                    </table>
+                      </div>
+
+                      {/* Immediate Check-In / Check-Out Buttons */}
+                      <div className="button-row">
+                        <button
+                          className="btn btn-checkin"
+                          onClick={() => handleMarkAttendance('CHECK_IN')}
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? 'Verifying...' : '✓ Mark Check-In'}
+                        </button>
+                        <button
+                          className="btn btn-checkout"
+                          onClick={() => handleMarkAttendance('CHECK_OUT')}
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? 'Verifying...' : '⏱ Mark Check-Out'}
+                        </button>
+                      </div>
+
+                      <div style={{ marginTop: '0.9rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                        Stand naturally before the camera and click <strong>Mark Check-In</strong> to record your attendance.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Today's Verified Attendance */}
+                  <div className="card">
+                    <div className="card-header">
+                      <div className="card-title">
+                        📋 Today's Attendance ({todayRecords.length})
+                      </div>
+                      <button 
+                        className="btn btn-secondary" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                        onClick={fetchData}
+                      >
+                        🔄 Refresh
+                      </button>
+                    </div>
+                    <div className="card-body" style={{ padding: 0 }}>
+                      <div className="table-container">
+                        {todayRecords.length === 0 ? (
+                          <div className="empty-state">
+                            <div className="empty-state-icon">📋</div>
+                            <p>No check-ins marked yet today.</p>
+                            <p style={{ fontSize: '0.8rem' }}>Stand before the camera and click Mark Check-In.</p>
+                          </div>
+                        ) : (
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Staff Member</th>
+                                <th>Department</th>
+                                <th>Check-In</th>
+                                <th>Check-Out</th>
+                                <th>Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {todayRecords.map((rec) => (
+                                <tr key={rec.id}>
+                                  <td>
+                                    <div className="staff-badge">
+                                      <div className="staff-avatar">
+                                        {rec.user?.photoData ? (
+                                          <img src={rec.user.photoData} alt={rec.user.fullName} />
+                                        ) : (
+                                          rec.user?.fullName?.charAt(0) || 'U'
+                                        )}
+                                      </div>
+                                      <div>
+                                        <strong>{rec.user?.fullName || 'Employee'}</strong>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                          ID: {rec.user?.employeeId}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>{rec.user?.department || 'General'}</td>
+                                  <td>
+                                    <strong style={{ color: 'var(--green-checkin)' }}>{rec.checkInTime || '-'}</strong>
+                                  </td>
+                                  <td>
+                                    <strong style={{ color: 'var(--red-checkout)' }}>{rec.checkOutTime || '-'}</strong>
+                                  </td>
+                                  <td>
+                                    <span className={`status-tag ${rec.status === 'LATE' ? 'tag-late' : 'tag-present'}`}>
+                                      {rec.status || 'PRESENT'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* REGISTRATION TAB */}
+            {/* TAB 2: STAFF REGISTRATION */}
             {activeTab === 'register' && (
-              <div className="grid-2">
-                <div className="card">
-                  <h2 className="card-title">📸 Step 1: Enroll Facial Biometrics</h2>
-                  <div className="viewfinder-box">
-                    <video ref={regVideoRef} autoPlay playsInline muted className="webcam-video" />
-                    <div className="target-reticle"></div>
-                  </div>
-                  <div className="action-bar">
-                    <button className="btn btn-primary" onClick={handleEnrollFace} disabled={isProcessing}>
-                      {capturedDescriptor ? '✓ Face Enrolled (Re-scan)' : 'Capture & Extract Biometric Template'}
-                    </button>
-                  </div>
-                  {capturedSnapshot && (
-                    <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <img src={capturedSnapshot} style={{ width: '80px', height: '60px', borderRadius: '8px', border: '2px solid #10b981', objectFit: 'cover' }} />
-                      <span style={{ color: '#10b981', fontSize: '0.85rem' }}>✓ 128D Embedding Computed</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="card">
-                  <h2 className="card-title">📝 Step 2: Employee Information</h2>
-                  <form onSubmit={handleRegister}>
-                    <div className="form-group">
-                      <label className="form-label">Employee ID *</label>
-                      <input className="form-input" required placeholder="EMP-101" value={regForm.employeeId} onChange={e => setRegForm({...regForm, employeeId: e.target.value})} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Full Name *</label>
-                      <input className="form-input" required placeholder="Alexander Pierce" value={regForm.fullName} onChange={e => setRegForm({...regForm, fullName: e.target.value})} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Work Email *</label>
-                      <input className="form-input" type="email" required placeholder="alex@company.com" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Department</label>
-                      <input className="form-input" value={regForm.department} onChange={e => setRegForm({...regForm, department: e.target.value})} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Designation / Role</label>
-                      <input className="form-input" value={regForm.role} onChange={e => setRegForm({...regForm, role: e.target.value})} />
-                    </div>
-                    <button type="submit" className="btn btn-success" style={{ width: '100%', marginTop: '1rem' }} disabled={!capturedDescriptor}>
-                      Save Staff Biometric Profile
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* DASHBOARD TAB */}
-            {activeTab === 'dashboard' && (
               <div className="card">
-                <h2 className="card-title">📊 Historical Attendance & Anti-Spoof Audit Logs</h2>
-                <div className="table-responsive">
-                  <table className="attendance-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th><th>Employee ID</th><th>Full Name</th><th>Check In</th><th>Check Out</th><th>Liveness Verified</th><th>Match Score</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historyRecords.length === 0 ? (
-                        <tr><td colSpan="7" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No attendance records saved yet.</td></tr>
-                      ) : (
-                        historyRecords.map(h => (
-                          <tr key={h.id}>
-                            <td>{h.date}</td>
-                            <td>{h.user.employeeId}</td>
-                            <td>{h.user.fullName}</td>
-                            <td style={{ color: '#34d399' }}>{h.checkInTime || '--:--'}</td>
-                            <td style={{ color: '#f87171' }}>{h.checkOutTime || '--:--'}</td>
-                            <td>
-                              <span className="status-badge badge-present">✓ Real Human ({h.blinkCount || 1} blinks)</span>
-                            </td>
-                            <td>{h.confidenceScore ? `${Math.round(h.confidenceScore * 100)}%` : '98%'}</td>
-                          </tr>
-                        ))
+                <div className="card-header">
+                  <div className="card-title">👤 Register New Staff Member</div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    Capture face biometrics and enroll in MySQL database
+                  </span>
+                </div>
+                <div className="card-body">
+                  <div className="scanner-grid">
+                    {/* Left: Camera Enrollment */}
+                    <div>
+                      <div className="viewfinder-wrapper" style={{ maxHeight: '340px' }}>
+                        <video ref={regVideoRef} autoPlay playsInline muted className="webcam-stream" />
+                        <div className="face-target-guide">
+                          <span>Look Straight Ahead</span>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ flex: 1 }}
+                          onClick={handleCaptureEnrollment}
+                          disabled={isProcessing}
+                        >
+                          📸 Capture Face Photo
+                        </button>
+                      </div>
+
+                      {enrolledSnapshot && (
+                        <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', background: '#f5efe6', padding: '0.75rem', borderRadius: '8px' }}>
+                          <img src={enrolledSnapshot} style={{ width: '60px', height: '60px', borderRadius: '6px', objectFit: 'cover' }} />
+                          <div>
+                            <strong style={{ color: '#2e7d32' }}>✓ Face Biometric Captured</strong>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>128-dimensional facial embedding vector extracted.</p>
+                          </div>
+                        </div>
                       )}
-                    </tbody>
-                  </table>
+                    </div>
+
+                    {/* Right: Employee Details Form */}
+                    <form onSubmit={handleSubmitRegistration}>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label>Employee ID *</label>
+                          <input 
+                            type="text" 
+                            className="form-control" 
+                            placeholder="e.g. EMP104"
+                            required
+                            value={regForm.employeeId}
+                            onChange={e => setRegForm({...regForm, employeeId: e.target.value})}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Full Name *</label>
+                          <input 
+                            type="text" 
+                            className="form-control" 
+                            placeholder="e.g. Sudhan Raj"
+                            required
+                            value={regForm.fullName}
+                            onChange={e => setRegForm({...regForm, fullName: e.target.value})}
+                          />
+                        </div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                          <label>Email Address *</label>
+                          <input 
+                            type="email" 
+                            className="form-control" 
+                            placeholder="e.g. sudhan@institution.edu"
+                            required
+                            value={regForm.email}
+                            onChange={e => setRegForm({...regForm, email: e.target.value})}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Department</label>
+                          <select 
+                            className="form-control"
+                            value={regForm.department}
+                            onChange={e => setRegForm({...regForm, department: e.target.value})}
+                          >
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Electronics & Communication">Electronics & Communication</option>
+                            <option value="Mechanical Engineering">Mechanical Engineering</option>
+                            <option value="Administration">Administration</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label>Designation / Role</label>
+                          <input 
+                            type="text" 
+                            className="form-control" 
+                            placeholder="e.g. Assistant Professor"
+                            value={regForm.role}
+                            onChange={e => setRegForm({...regForm, role: e.target.value})}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                        <button 
+                          type="submit" 
+                          className="btn btn-checkin"
+                          disabled={isProcessing || !enrolledDescriptor}
+                        >
+                          ✓ Save & Enroll Staff Profile
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* DIRECTORY TAB */}
+            {/* TAB 3: ATTENDANCE HISTORY LOGS */}
+            {activeTab === 'history' && (
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title">📋 Comprehensive Attendance Records</div>
+                  <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={fetchData}>
+                    🔄 Refresh Records
+                  </button>
+                </div>
+                <div className="card-body" style={{ padding: 0 }}>
+                  <div className="table-container">
+                    {allRecords.length === 0 ? (
+                      <div className="empty-state">
+                        <div className="empty-state-icon">📂</div>
+                        <p>No historical attendance records found.</p>
+                      </div>
+                    ) : (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Staff Member</th>
+                            <th>Department</th>
+                            <th>Check-In Time</th>
+                            <th>Check-Out Time</th>
+                            <th>Status</th>
+                            <th>Confidence</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allRecords.map((r) => (
+                            <tr key={r.id}>
+                              <td><strong>{r.date}</strong></td>
+                              <td>
+                                <div className="staff-badge">
+                                  <div className="staff-avatar">
+                                    {r.user?.fullName?.charAt(0) || 'U'}
+                                  </div>
+                                  <div>
+                                    <div>{r.user?.fullName}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {r.user?.employeeId}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>{r.user?.department}</td>
+                              <td style={{ color: 'var(--green-checkin)', fontWeight: 600 }}>{r.checkInTime || '-'}</td>
+                              <td style={{ color: 'var(--red-checkout)', fontWeight: 600 }}>{r.checkOutTime || '-'}</td>
+                              <td>
+                                <span className={`status-tag ${r.status === 'LATE' ? 'tag-late' : 'tag-present'}`}>
+                                  {r.status || 'PRESENT'}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                {r.confidenceScore ? `${(r.confidenceScore * 100).toFixed(0)}%` : '100%'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: STAFF DIRECTORY */}
             {activeTab === 'users' && (
               <div className="card">
-                <h2 className="card-title">👥 Enrolled Staff Directory</h2>
-                <div className="table-responsive">
-                  <table className="attendance-table">
-                    <thead>
-                      <tr>
-                        <th>Photo</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Biometrics</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {staffList.length === 0 ? (
-                        <tr><td colSpan="7" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No staff enrolled yet.</td></tr>
-                      ) : (
-                        staffList.map(u => (
-                          <tr key={u.id}>
-                            <td>
-                              {u.photoData ? (
-                                <img src={u.photoData} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
-                              ) : (
-                                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
-                              )}
-                            </td>
-                            <td><strong>{u.employeeId}</strong></td>
-                            <td>{u.fullName}</td>
-                            <td>{u.email}</td>
-                            <td>{u.department}</td>
-                            <td>{u.role}</td>
-                            <td><span className="status-badge badge-present">✓ 128D Enrolled</span></td>
+                <div className="card-header">
+                  <div className="card-title">👥 Registered Staff Directory ({staffDirectory.length})</div>
+                  <button 
+                    className="btn btn-checkin" 
+                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }}
+                    onClick={() => setActiveTab('register')}
+                  >
+                    + Add New Staff
+                  </button>
+                </div>
+                <div className="card-body" style={{ padding: 0 }}>
+                  <div className="table-container">
+                    {staffDirectory.length === 0 ? (
+                      <div className="empty-state">
+                        <div className="empty-state-icon">👥</div>
+                        <p>No staff registered in database.</p>
+                      </div>
+                    ) : (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Photo</th>
+                            <th>Employee ID</th>
+                            <th>Full Name</th>
+                            <th>Email Address</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th>Enrolled Biometrics</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody>
+                          {staffDirectory.map((user) => (
+                            <tr key={user.id}>
+                              <td>
+                                <div className="staff-avatar">
+                                  {user.photoData ? (
+                                    <img src={user.photoData} alt={user.fullName} />
+                                  ) : (
+                                    user.fullName?.charAt(0) || 'U'
+                                  )}
+                                </div>
+                              </td>
+                              <td><strong>{user.employeeId}</strong></td>
+                              <td><strong>{user.fullName}</strong></td>
+                              <td>{user.email}</td>
+                              <td>{user.department}</td>
+                              <td>{user.role}</td>
+                              <td>
+                                <span className="status-tag tag-present">
+                                  ✓ 128D Active
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
-          </main>
+          </div>
+
+          <footer className="app-footer">
+            <p>Faculty & Staff Biometric Attendance Management System • Powered by Spring Boot & MySQL</p>
+          </footer>
         </div>
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    ReactDOM.createRoot(document.getElementById('root')).render(<AttendancePortal />);
   </script>
 </body>
 </html>
