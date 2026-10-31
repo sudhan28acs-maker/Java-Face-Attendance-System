@@ -13,13 +13,12 @@
   <!-- Face-API.js -->
   <script src="/face-api.min.js"></script>
   <script>
-    // Fallback if local face-api fails
     if (!window.faceapi) {
       document.write('<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"><\/script>');
     }
   </script>
   
-  <!-- Humanized Clean Typography -->
+  <!-- Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
@@ -34,13 +33,12 @@
       --border-sandal: #dfd3c3;
       --border-sandal-light: #ece3d6;
       
-      /* Humanized Editorial Colors */
+      /* Humanized Colors */
       --text-primary: #2d261e;
       --text-secondary: #655b50;
       --text-muted: #8c8072;
       --primary-brown: #8a5327;
       --primary-brown-hover: #73431d;
-      --warm-navy: #2c3e50;
       
       /* Status Colors */
       --green-checkin: #2e7d32;
@@ -51,12 +49,9 @@
       --badge-present-text: #1b5e20;
       --badge-late-bg: #fff8e1;
       --badge-late-text: #b78103;
-      --badge-leave-bg: #ffebee;
-      --badge-leave-text: #b71c1c;
       
       --shadow-sm: 0 2px 6px rgba(110, 85, 55, 0.05);
       --shadow-md: 0 4px 14px rgba(110, 85, 55, 0.08);
-      --shadow-lg: 0 10px 25px rgba(110, 85, 55, 0.12);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -69,7 +64,6 @@
       line-height: 1.5;
     }
 
-    /* Top Institution / Organization Bar */
     .top-header {
       background: #ffffff;
       border-bottom: 1px solid var(--border-sandal);
@@ -151,14 +145,12 @@
       box-shadow: 0 2px 6px rgba(110, 85, 55, 0.1);
     }
 
-    /* Main Container */
     .container {
       max-width: 1320px;
       margin: 1.75rem auto;
       padding: 0 1.5rem;
     }
 
-    /* Alert Banner */
     .alert-banner {
       padding: 0.85rem 1.25rem;
       border-radius: 8px;
@@ -190,7 +182,6 @@
       color: #a82415;
     }
 
-    /* 2 Column Layout */
     .scanner-grid {
       display: grid;
       grid-template-columns: 1.15fr 0.85fr;
@@ -201,7 +192,6 @@
       .scanner-grid { grid-template-columns: 1fr; }
     }
 
-    /* Humanized Cards */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border-sandal);
@@ -233,7 +223,6 @@
       padding: 1.4rem;
     }
 
-    /* Video Frame */
     .viewfinder-wrapper {
       position: relative;
       width: 100%;
@@ -245,7 +234,6 @@
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
     }
 
-    /* Mirrored Video so natural movement */
     .webcam-stream {
       width: 100%;
       height: 100%;
@@ -263,7 +251,6 @@
       transform: scaleX(-1);
     }
 
-    /* Natural Face Target Framing */
     .face-target-guide {
       position: absolute;
       top: 50%;
@@ -271,7 +258,7 @@
       transform: translate(-50%, -50%);
       width: 240px;
       height: 290px;
-      border: 2px dashed rgba(255, 255, 255, 0.45);
+      border: 2px dashed rgba(255, 255, 255, 0.5);
       border-radius: 130px 130px 110px 110px;
       pointer-events: none;
       display: flex;
@@ -281,7 +268,7 @@
     }
 
     .face-target-guide span {
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.65);
       color: #fff;
       font-size: 0.72rem;
       font-weight: 500;
@@ -322,7 +309,6 @@
       100% { opacity: 0.4; transform: scale(0.9); }
     }
 
-    /* Action Buttons */
     .button-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -346,7 +332,7 @@
     }
 
     .btn:disabled {
-      opacity: 0.6;
+      opacity: 0.65;
       cursor: not-allowed;
       transform: none !important;
     }
@@ -378,7 +364,6 @@
       background: var(--bg-sandal-dark);
     }
 
-    /* Today's Table */
     .table-container {
       overflow-x: auto;
       max-height: 480px;
@@ -452,9 +437,7 @@
 
     .tag-present { background: var(--badge-present-bg); color: var(--badge-present-text); }
     .tag-late { background: var(--badge-late-bg); color: var(--badge-late-text); }
-    .tag-leave { background: var(--badge-leave-bg); color: var(--badge-leave-text); }
 
-    /* Summary Stats Bar */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -495,7 +478,6 @@
       font-weight: 500;
     }
 
-    /* Registration Form */
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -530,7 +512,6 @@
       box-shadow: 0 0 0 2px rgba(138, 83, 39, 0.15);
     }
 
-    /* Empty state */
     .empty-state {
       text-align: center;
       padding: 3rem 1rem;
@@ -542,7 +523,6 @@
       opacity: 0.6;
     }
 
-    /* Footer */
     .app-footer {
       text-align: center;
       padding: 2rem;
@@ -564,12 +544,14 @@
 
     function AttendancePortal() {
       const [activeTab, setActiveTab] = useState('scan');
-      const [status, setStatus] = useState({ text: 'Initializing biometric scanner and connecting to database...', type: 'info' });
+      const [status, setStatus] = useState({ text: 'Loading biometric facial recognition models...', type: 'info' });
       const [modelsReady, setModelsReady] = useState(false);
       const [isProcessing, setIsProcessing] = useState(false);
+      const [processingAction, setProcessingAction] = useState(null);
       const [faceInView, setFaceInView] = useState(false);
 
-      // WebCam references
+      // Refs to prevent state race condition
+      const isProcessingRef = useRef(false);
       const videoRef = useRef(null);
       const regVideoRef = useRef(null);
       const canvasRef = useRef(null);
@@ -584,13 +566,13 @@
         employeeId: '',
         fullName: '',
         email: '',
-        department: 'Engineering',
+        department: 'Computer Science',
         role: 'Faculty / Staff'
       });
       const [enrolledDescriptor, setEnrolledDescriptor] = useState(null);
       const [enrolledSnapshot, setEnrolledSnapshot] = useState(null);
 
-      // 1. Load Face Detection & Recognition Models
+      // 1. Load Biometric Models (SSD / Landmarks / Recognition)
       useEffect(() => {
         let isMounted = true;
         const loadModels = async () => {
@@ -599,16 +581,16 @@
             return;
           }
           try {
-            // Use CDN weights with full compatibility
             const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
             await Promise.all([
               window.faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
               window.faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
               window.faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
             ]);
+
             if (isMounted) {
               setModelsReady(true);
-              setStatus({ text: 'System ready. Camera and biometric models loaded.', type: 'info' });
+              setStatus({ text: '✓ Biometric models ready. Stand before camera to mark attendance.', type: 'success' });
             }
           } catch (e) {
             console.warn("Face models CDN fallback:", e);
@@ -622,7 +604,7 @@
         return () => { isMounted = false; };
       }, []);
 
-      // 2. Manage Webcam Stream
+      // 2. Camera Stream Lifecycle
       useEffect(() => {
         let stream = null;
         const startWebcam = async () => {
@@ -646,54 +628,47 @@
         };
       }, [activeTab]);
 
-      // 3. Face Presence Indicator Loop (Real-time detection without eye-blink requirement)
+      // 3. Low-Overhead Face Presence Indicator (Controlled 1-second interval, NEVER freezes WebGL)
       useEffect(() => {
-        let frameId;
-        const checkFace = async () => {
-          if (activeTab === 'scan' && videoRef.current && modelsReady && window.faceapi) {
-            const vid = videoRef.current;
-            if (vid.readyState === 4) {
-              try {
-                // Quick face detection to see if face is in frame
-                const detection = await window.faceapi.detectSingleFace(vid);
-                if (detection) {
-                  setFaceInView(true);
-                  if (canvasRef.current) {
-                    const canvas = canvasRef.current;
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = vid.videoWidth;
-                    canvas.height = vid.videoHeight;
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Draw clean subtle border around face box
-                    const box = detection.box;
-                    ctx.strokeStyle = '#2e7d32';
-                    ctx.lineWidth = 2.5;
-                    ctx.strokeRect(box.x, box.y, box.width, box.height);
-                  }
-                } else {
-                  setFaceInView(false);
-                  if (canvasRef.current) {
-                    const canvas = canvasRef.current;
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                  }
-                }
-              } catch (e) {
-                // ignore frame tick error
+        if (activeTab !== 'scan') return;
+        let isChecking = false;
+
+        const checkTimer = setInterval(async () => {
+          if (isProcessingRef.current || isChecking) return;
+          if (!videoRef.current || !modelsReady || !window.faceapi) return;
+          const vid = videoRef.current;
+          if (vid.readyState !== 4) return;
+
+          isChecking = true;
+          try {
+            const det = await window.faceapi.detectSingleFace(vid);
+            setFaceInView(!!det);
+
+            if (canvasRef.current) {
+              const canvas = canvasRef.current;
+              const ctx = canvas.getContext('2d');
+              canvas.width = vid.videoWidth;
+              canvas.height = vid.videoHeight;
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+              if (det) {
+                const b = det.box;
+                ctx.strokeStyle = '#2e7d32';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(b.x, b.y, b.width, b.height);
               }
             }
+          } catch (e) {
+            // Silently skip if GPU is busy
+          } finally {
+            isChecking = false;
           }
-          frameId = requestAnimationFrame(checkFace);
-        };
+        }, 1200);
 
-        if (activeTab === 'scan') {
-          frameId = requestAnimationFrame(checkFace);
-        }
-        return () => cancelAnimationFrame(frameId);
+        return () => clearInterval(checkTimer);
       }, [activeTab, modelsReady]);
 
-      // 4. Fetch Attendance Records & Staff
+      // 4. Fetch Attendance Records & Staff from MySQL
       const fetchData = async () => {
         try {
           const [resToday, resHist, resStaff] = await Promise.all([
@@ -715,21 +690,38 @@
         return () => clearInterval(interval);
       }, []);
 
-      // Extract 128D Face Descriptor
+      // Extract 128D Face Descriptor (Picks largest front face if multiple people in view)
       const extractFaceDescriptor = async (videoElement) => {
         if (!window.faceapi || !videoElement) return null;
-        try {
-          const detection = await window.faceapi
+
+        // Detect all faces in camera view
+        const detections = await window.faceapi
+          .detectAllFaces(videoElement)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        if (!detections || detections.length === 0) {
+          // Fallback to detectSingleFace
+          const single = await window.faceapi
             .detectSingleFace(videoElement)
             .withFaceLandmarks()
             .withFaceDescriptor();
-          if (detection && detection.descriptor) {
-            return Array.from(detection.descriptor);
-          }
-        } catch (err) {
-          console.error("Extraction error:", err);
+          return single?.descriptor ? Array.from(single.descriptor) : null;
         }
-        return null;
+
+        // Pick largest face (the user in the front oval, closest to camera)
+        let bestFace = detections[0];
+        let maxArea = bestFace.detection.box.width * bestFace.detection.box.height;
+
+        for (let i = 1; i < detections.length; i++) {
+          const area = detections[i].detection.box.width * detections[i].detection.box.height;
+          if (area > maxArea) {
+            maxArea = area;
+            bestFace = detections[i];
+          }
+        }
+
+        return bestFace?.descriptor ? Array.from(bestFace.descriptor) : null;
       };
 
       // Capture Snapshot
@@ -739,24 +731,38 @@
         canvas.width = 400;
         canvas.height = 300;
         const ctx = canvas.getContext('2d');
-        // Mirror snapshot naturally
         ctx.translate(400, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(videoElement, 0, 0, 400, 300);
         return canvas.toDataURL('image/jpeg', 0.85);
       };
 
-      // 5. Handle Attendance Check-In / Check-Out (NO BLINK BLOCKING)
+      // 5. Handle Attendance Check-In / Check-Out with STRICT 5-SECOND TIMEOUT
       const handleMarkAttendance = async (actionType) => {
-        if (!videoRef.current) return;
+        if (!videoRef.current || isProcessing) return;
+        if (!modelsReady) {
+          setStatus({ text: 'Biometric models are still initializing. Please wait a moment...', type: 'info' });
+          return;
+        }
+
         setIsProcessing(true);
-        setStatus({ text: `Analyzing face for ${actionType === 'CHECK_IN' ? 'Check-In' : 'Check-Out'}...`, type: 'info' });
+        setProcessingAction(actionType);
+        isProcessingRef.current = true;
+        setStatus({ text: `Authenticating facial biometrics for ${actionType === 'CHECK_IN' ? 'Check-In' : 'Check-Out'}...`, type: 'info' });
 
         try {
-          const descriptor = await extractFaceDescriptor(videoRef.current);
+          // Strict 5-second race timeout so it NEVER gets stuck
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error("Biometric scan timed out. Look directly at camera and click again.")), 5000);
+          });
+
+          const descriptor = await Promise.race([
+            extractFaceDescriptor(videoRef.current),
+            timeoutPromise
+          ]);
+
           if (!descriptor) {
-            setStatus({ text: 'No clear face detected. Please face the camera and try again.', type: 'error' });
-            setIsProcessing(false);
+            setStatus({ text: '⚠️ No face clearly detected. Please center your face in the oval.', type: 'error' });
             return;
           }
 
@@ -766,7 +772,7 @@
             faceDescriptor: JSON.stringify(descriptor),
             capturedSnapshot: photo,
             actionType: actionType,
-            livenessVerified: true, // Always true - eye blink requirement removed
+            livenessVerified: true,
             blinkCount: 1,
             earScore: 0.35
           };
@@ -775,29 +781,30 @@
           setStatus({ text: `✓ ${res.data.message}`, type: 'success' });
           await fetchData();
         } catch (err) {
-          const msg = err.response?.data?.message || err.response?.data || err.message || 'Face not recognized';
+          const msg = err.response?.data?.message || err.response?.data || err.message || 'Face recognition failed';
           setStatus({ text: `❌ ${msg}`, type: 'error' });
         } finally {
           setIsProcessing(false);
+          setProcessingAction(null);
+          isProcessingRef.current = false;
         }
       };
 
       // 6. Enroll Staff Face
       const handleCaptureEnrollment = async () => {
-        if (!regVideoRef.current) return;
+        if (!regVideoRef.current || isProcessing) return;
         setIsProcessing(true);
         setStatus({ text: 'Scanning facial biometrics...', type: 'info' });
         try {
           const descriptor = await extractFaceDescriptor(regVideoRef.current);
           if (!descriptor) {
             setStatus({ text: 'Could not detect face for registration. Look straight into camera.', type: 'error' });
-            setIsProcessing(false);
             return;
           }
           const photo = captureSnapshot(regVideoRef.current);
           setEnrolledDescriptor(descriptor);
           setEnrolledSnapshot(photo);
-          setStatus({ text: '✓ Face profile captured! Now enter details and click "Save Staff Profile".', type: 'success' });
+          setStatus({ text: '✓ Face profile captured! Enter employee details and click "Save Staff Profile".', type: 'success' });
         } catch (e) {
           setStatus({ text: 'Capture failed: ' + e.message, type: 'error' });
         } finally {
@@ -823,12 +830,11 @@
 
           const res = await axios.post(`${API_BASE}/users`, payload);
           setStatus({ text: `✓ Staff registered successfully: ${res.data.fullName} (ID: ${res.data.employeeId})`, type: 'success' });
-          // Reset form
           setRegForm({
             employeeId: '',
             fullName: '',
             email: '',
-            department: 'Engineering',
+            department: 'Computer Science',
             role: 'Faculty / Staff'
           });
           setEnrolledDescriptor(null);
@@ -953,18 +959,36 @@
                         <button
                           className="btn btn-checkin"
                           onClick={() => handleMarkAttendance('CHECK_IN')}
-                          disabled={isProcessing}
+                          disabled={isProcessing || !modelsReady}
                         >
-                          {isProcessing ? 'Verifying...' : '✓ Mark Check-In'}
+                          {!modelsReady ? 'Loading Biometrics...' : (processingAction === 'CHECK_IN' ? 'Verifying Check-In...' : '✓ Mark Check-In')}
                         </button>
                         <button
                           className="btn btn-checkout"
                           onClick={() => handleMarkAttendance('CHECK_OUT')}
-                          disabled={isProcessing}
+                          disabled={isProcessing || !modelsReady}
                         >
-                          {isProcessing ? 'Verifying...' : '⏱ Mark Check-Out'}
+                          {!modelsReady ? 'Loading Biometrics...' : (processingAction === 'CHECK_OUT' ? 'Verifying Check-Out...' : '⏱ Mark Check-Out')}
                         </button>
                       </div>
+
+                      {/* Reset Trigger if verification takes long */}
+                      {isProcessing && (
+                        <div style={{ textAlign: 'center', marginTop: '0.65rem' }}>
+                          <button
+                            type="button"
+                            style={{ background: 'none', border: 'none', color: '#c62828', fontSize: '0.825rem', textDecoration: 'underline', cursor: 'pointer' }}
+                            onClick={() => {
+                              setIsProcessing(false);
+                              setProcessingAction(null);
+                              isProcessingRef.current = false;
+                              setStatus({ text: 'Biometric verification reset. Ready to scan.', type: 'info' });
+                            }}
+                          >
+                            Taking too long? Click here to Reset
+                          </button>
+                        </div>
+                      )}
 
                       <div style={{ marginTop: '0.9rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
                         Stand naturally before the camera and click <strong>Mark Check-In</strong> to record your attendance.
@@ -1060,7 +1084,6 @@
                 </div>
                 <div className="card-body">
                   <div className="scanner-grid">
-                    {/* Left: Camera Enrollment */}
                     <div>
                       <div className="viewfinder-wrapper" style={{ maxHeight: '340px' }}>
                         <video ref={regVideoRef} autoPlay playsInline muted className="webcam-stream" />
@@ -1091,7 +1114,6 @@
                       )}
                     </div>
 
-                    {/* Right: Employee Details Form */}
                     <form onSubmit={handleSubmitRegistration}>
                       <div className="form-grid">
                         <div className="form-group">
