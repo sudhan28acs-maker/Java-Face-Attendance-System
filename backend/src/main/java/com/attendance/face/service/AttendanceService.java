@@ -102,11 +102,12 @@ public class AttendanceService {
             if (existingOpt.isPresent()) {
                 record = existingOpt.get();
                 record.setCheckOutTime(now);
+                record.setStatus("PRESENT");
                 record.setLivenessVerified(live);
                 attendanceRepository.save(record);
                 return new AttendanceResponse(true, "Check-Out recorded successfully for " + bestMatch.getFullName() + " at " + now.toString().substring(0, 8), bestMatch, record, minDistance);
             } else {
-                record = new AttendanceRecord(bestMatch, today, null, "CHECK_OUT_ONLY", 1.0 - minDistance, request.getCapturedSnapshot(), live, blinks);
+                record = new AttendanceRecord(bestMatch, today, null, "PRESENT", 1.0 - minDistance, request.getCapturedSnapshot(), live, blinks);
                 record.setCheckOutTime(now);
                 attendanceRepository.save(record);
                 return new AttendanceResponse(true, "Check-Out recorded for " + bestMatch.getFullName() + " at " + now.toString().substring(0, 8), bestMatch, record, minDistance);
@@ -115,15 +116,21 @@ public class AttendanceService {
             // Default CHECK_IN
             if (existingOpt.isPresent()) {
                 record = existingOpt.get();
-                return new AttendanceResponse(true, "Check-In verified! " + bestMatch.getFullName() + " is recorded as " + record.getStatus() + " (at " + record.getCheckInTime() + ")", bestMatch, record, minDistance);
+                record.setCheckInTime(now);
+                record.setStatus("PRESENT");
+                if (request.getCapturedSnapshot() != null && !request.getCapturedSnapshot().isEmpty()) {
+                    record.setCapturedSnapshot(request.getCapturedSnapshot());
+                }
+                attendanceRepository.save(record);
+                return new AttendanceResponse(true, "Check-In recorded successfully! " + bestMatch.getFullName() + " marked as PRESENT at " + now.toString().substring(0, 8), bestMatch, record, minDistance);
             }
 
-            // Normal office cutoff at 09:30 AM
-            String status = now.isAfter(LocalTime.of(9, 30)) ? "LATE" : "PRESENT";
+            // Normal check-in status
+            String status = "PRESENT";
             record = new AttendanceRecord(bestMatch, today, now, status, 1.0 - minDistance, request.getCapturedSnapshot(), live, blinks);
             attendanceRepository.save(record);
 
-            return new AttendanceResponse(true, "Live attendance marked successfully! Status: " + status + " (" + bestMatch.getFullName() + ")", bestMatch, record, minDistance);
+            return new AttendanceResponse(true, "Check-In recorded successfully! " + bestMatch.getFullName() + " marked as PRESENT at " + now.toString().substring(0, 8), bestMatch, record, minDistance);
         }
     }
 
