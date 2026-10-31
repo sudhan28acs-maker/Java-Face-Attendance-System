@@ -264,16 +264,10 @@
 
       // 1. Initialize Face-API Models (Weights)
       useEffect(() => {
-        let attempts = 0;
+        let timer;
         const initModels = async () => {
           if (!window.faceapi) {
-            attempts++;
-            if (attempts < 15) {
-              setTimeout(initModels, 1000);
-            } else {
-              setStatus({ text: 'Warning: face-api.js script took long to load. Using bypass if needed.', type: 'info' });
-              setModelsReady(true);
-            }
+            timer = setTimeout(initModels, 500);
             return;
           }
           try {
@@ -287,11 +281,11 @@
             setStatus({ text: '✓ Anti-Spoofing models loaded. Please look into camera & BLINK to verify liveness.', type: 'info' });
           } catch (e) {
             console.error("Models loading error:", e);
-            setStatus({ text: 'Model loading notice: Liveness detection ready with adaptive thresholds.', type: 'info' });
-            setModelsReady(true);
+            setStatus({ text: 'Error loading models: ' + e.message, type: 'error' });
           }
         };
         initModels();
+        return () => clearTimeout(timer);
       }, []);
 
       // 2. Camera Stream Lifecycle
@@ -322,11 +316,9 @@
         let animationFrameId;
         let isEyeClosed = false;
         let localBlinkCount = 0;
-        let baselineEAR = 0.30;
-        let frameCounter = 0;
 
         const detectLiveness = async () => {
-          if (activeTab === 'scan' && videoRef.current && window.faceapi) {
+          if (activeTab === 'scan' && videoRef.current && modelsReady && window.faceapi) {
             const video = videoRef.current;
             if (video.readyState === 4) {
               try {
@@ -346,29 +338,19 @@
 
                   setCurrentEAR(avgEAR.toFixed(3));
 
-                  // Dynamically calibrate open eye baseline over first 20 frames
-                  if (frameCounter < 30) {
-                    frameCounter++;
-                    baselineEAR = baselineEAR * 0.8 + avgEAR * 0.2;
-                  }
-
-                  // Responsive thresholds:
-                  // Closed threshold: when EAR dips 20% below baseline or below 0.24
-                  const closeThreshold = Math.min(0.24, baselineEAR * 0.80);
-                  // Open threshold: above 0.25
-                  const openThreshold = Math.max(0.25, baselineEAR * 0.90);
-
-                  if (avgEAR < closeThreshold) {
+                  // When eye is closed, EAR dips below 0.23
+                  // When eye re-opens, EAR recovers above 0.26
+                  if (avgEAR < 0.23) {
                     isEyeClosed = true;
-                  } else if (avgEAR > openThreshold && isEyeClosed) {
-                    // Full blink cycle completed
+                  } else if (avgEAR > 0.26 && isEyeClosed) {
+                    // One full natural blink cycle detected!
                     isEyeClosed = false;
                     localBlinkCount += 1;
                     setBlinkCount(localBlinkCount);
 
                     if (localBlinkCount >= 1) {
                       setLivenessVerified(true);
-                      setStatus({ text: `✓ Live Human Verified! (${localBlinkCount} blink detected). You can now Check-In / Out.`, type: 'success' });
+                      setStatus({ text: `✓ Live Human Verified! (${localBlinkCount} natural blink detected). You can now Check-In / Out.`, type: 'success' });
                     }
                   }
 
@@ -386,9 +368,17 @@
                     rightEye.forEach(p => ctx.fillRect(p.x - 2, p.y - 2, 4, 4));
                   }
                 } else {
+                  // No face in view
                   setCurrentEAR(0);
+                  if (canvasRef.current) {
+                    const canvas = canvasRef.current;
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                  }
                 }
-              } catch (err) {}
+              } catch (err) {
+                console.warn('Tracking tick error:', err);
+              }
             }
           }
           animationFrameId = requestAnimationFrame(detectLiveness);
@@ -398,7 +388,7 @@
           animationFrameId = requestAnimationFrame(detectLiveness);
         }
         return () => cancelAnimationFrame(animationFrameId);
-      }, [activeTab]);
+      }, [activeTab, modelsReady]);
 
       // 4. Fetch Dashboard Records
       const refreshData = async () => {
@@ -595,25 +585,16 @@
                       {livenessVerified ? (
                         <span style={{ color: '#10b981' }}>✓ Verified Real Person ({blinkCount} blink detected)</span>
                       ) : (
-                        <span style={{ color: '#f59e0b' }}>⚠️ Waiting for blink... (Look at camera and blink, or click Verify Now if in dim lighting)</span>
+                        <span style={{ color: '#f59e0b' }}>⚠️ Waiting for blink... (Phone photos & static pictures are rejected)</span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        className="nav-btn"
-                        style={{ padding: '0.35rem 0.65rem', background: '#3b82f6', color: '#fff' }}
-                        onClick={() => { setLivenessVerified(true); setBlinkCount(prev => prev + 1); setStatus({ text: '✓ Manual Liveness Confirmed (Live User Present). Ready to Check-In/Out.', type: 'success' }); }}
-                      >
-                        ⚡ Verify Liveness
-                      </button>
-                      <button
-                        className="nav-btn"
-                        style={{ padding: '0.35rem 0.65rem', background: '#1e293b' }}
-                        onClick={() => { setLivenessVerified(false); setBlinkCount(0); }}
-                      >
-                        🔄 Reset
-                      </button>
-                    </div>
+                    <button
+                      className="nav-btn"
+                      style={{ padding: '0.2rem 0.5rem', background: '#1e293b' }}
+                      onClick={() => { setLivenessVerified(false); setBlinkCount(0); }}
+                    >
+                      🔄 Reset Liveness
+                    </button>
                   </div>
 
                   <div className="action-bar">
